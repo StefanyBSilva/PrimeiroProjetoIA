@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconhecimento de Emoções</title>
+</head>
+<body>
+    <h1>Reconhecimento de Emoções com Teachable Machine</h1>
+    <video id="webcam" autoplay playsinline width="640" height="480"></video>
+    <p id="result">Aguardando reconhecimento...</p>
+
+    <!-- Importando TensorFlow.js e Teachable Machine -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    const URL = "https://teachablemachine.withgoogle.com/models/vYG3pm9hA/";
+    
+    <script>
+        const modelURL = "https://teachablemachine.withgoogle.com/models/vYG3pm9hA/model.json";
+        const metadataURL = "https://teachablemachine.withgoogle.com/models/vYG3pm9hA/metadata.json";
+
+        let model;
+
+        async function init() {
+            try {
+                // Carregar o modelo do Teachable Machine
+                model = await tmImage.load(modelURL, metadataURL);
+                console.log("Modelo carregado com sucesso.");
+
+                // Acessar a câmera e mostrar o vídeo na tela
+                const webcam = document.getElementById('webcam');
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                webcam.srcObject = stream;
+                console.log("Câmera acessada com sucesso.");
+
+                // Iniciar o reconhecimento com intervalos
+                webcam.addEventListener('loadeddata', () => setInterval(predict, 200));
+            } catch (error) {
+                console.error("Erro ao inicializar:", error);
+                document.getElementById('result').innerText = "Erro ao inicializar: " + error.message;
+            }
+        }
+
+        async function predict() {
+            try {
+                const webcam = document.getElementById('webcam');
+                const predictions = await model.predict(webcam);
+                const resultElement = document.getElementById('result');
+
+                // Identificar a emoção com maior probabilidade
+                const highestPrediction = predictions.reduce((max, prediction) => 
+                    prediction.probability > max.probability ? prediction : max
+                );
+
+                // Exibir o resultado com base na emoção detectada
+                if (highestPrediction.className === "Feliz" && highestPrediction.probability > 0.95) {
+                    resultElement.innerText = "Você está feliz! 😊";
+                } else if (highestPrediction.className === "Triste" && highestPrediction.probability > 0.95) {
+                    resultElement.innerText = "Você está triste. 😔";
+                } else {
+                    resultElement.innerText = "Emoção não detectada com clareza.";
+                }
+            } catch (error) {
+                console.error("Erro ao fazer a previsão:", error);
+                document.getElementById('result').innerText = "Erro ao fazer a previsão: " + error.message;
+            }
+        }
+
+        // Inicializar o modelo e a webcam
+        init();
+    </script>
+</body>
+</html>
